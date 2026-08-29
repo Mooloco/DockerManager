@@ -1,0 +1,23 @@
+# Docker Manager 开发/测试用 Compose
+# 生产环境请设置强密码: export DM_ADMIN_PASSWORD=你的密码
+services:
+  docker-manager:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: docker-manager:dev
+    container_name: docker-manager
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      # Docker socket(注意:部分系统 docker.sock 属于 root 组,
+      # 若容器内非 root 用户无法访问,可将 socket 组 gid 与容器用户对齐,
+      # 或临时注释 Dockerfile 中的 USER docker-manager 以 root 运行)
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data:/data
+    environment:
+      - DM_ADMIN_PASSWORD=${DM_ADMIN_PASSWORD:-docker-manager}
+      - DATABASE_PATH=/data/docker-manager.db
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - TZ=Asia/Shanghai

@@ -1,0 +1,81 @@
+:root {
+  --dm-sidebar-width: 220px;
+  --dm-header-height: 56px;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 暗色模式基础 */
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--el-bg-color-page);
+  color: var(--el-text-color-primary);
+}
+
+/* 滚动条 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--el-border-color-darker);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 页面通用容器 */
+.page-container {
+  padding: 16px;
+}
+
+.page-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.page-toolbar .spacer {
+  flex: 1;
+}
+
+/* 表格容器 */
+.table-card {
+  background: var(--el-bg-color);
+  border-radius: 8px;
+  border: 1px solid var(--el-border-color-lighter);
+}
+
+/* 等宽字体用于 ID/命令等 */
+.mono {
+  font-family: 'JetBrains Mono', Consolas, 'Courier New', monospace;
+  font-size: 0.9em;
+}
+
+/* 终端占位 */
+.terminal-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 420px;
+  background: #1e1e1e;
+  color: #9cdcfe;
+  border-radius: 8px;
+  gap: 16px;
+  font-size: 15px;
+}

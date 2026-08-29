@@ -1,0 +1,26 @@
+[Unit]
+Description=Docker Manager - lightweight Docker web console
+Documentation=https://github.com/Mooloco/docker-manager
+# 等 Docker 就绪后再启动
+After=docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+User=docker-manager
+Group=docker
+# 环境变量(如 DM_ADMIN_PASSWORD)可放在此文件中,权限 600
+EnvironmentFile=-/etc/docker-manager/env
+ExecStart=/usr/bin/docker-manager -config /etc/docker-manager/config.yaml
+Restart=on-failure
+RestartSec=5
+# 安全加固
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/docker-manager
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

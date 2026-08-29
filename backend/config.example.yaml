@@ -1,0 +1,23 @@
+# Docker Manager 配置文件示例
+# 复制为 config.yaml 使用;所有项均可被同名环境变量覆盖
+
+server:
+  host: 0.0.0.0
+  port: 8080
+
+docker:
+  host: unix:///var/run/docker.sock
+
+database:
+  path: ./data/docker-manager.db
+
+logging:
+  level: info
+
+auth:
+  # 初始管理员用户名(仅首次启动创建账号时使用)
+  username: admin
+  # 初始管理员密码从该环境变量读取(首次启动必填)
+  password_env: DM_ADMIN_PASSWORD
+  # 登录 session 有效期(小时)
+  session_ttl_hours: 24
