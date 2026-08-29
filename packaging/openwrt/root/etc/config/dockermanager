@@ -1,0 +1,11 @@
+# Docker Manager 配置(UCI)
+# 修改后 /etc/init.d/dockermanager restart 生效(或 uci commit 后自动重载)
+# 注意:使用匿名 section(config main),init 脚本以 main 引用
+
+config main
+	option enabled '1'
+	option port '8080'
+	option bind_addr '0.0.0.0'
+	option data_dir '/ext/dockermanager'
+	option projects_dir '/ext/dockermanager/projects'
+	option admin_password ''

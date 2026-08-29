@@ -1,0 +1,56 @@
+#!/bin/sh /etc/rc.common
+# Docker Manager - procd init script (OpenWrt)
+# 配置:/etc/config/dockermanager (uci set)
+#    option enabled '1'           # 是否启用
+#    option port '8080'           # 监听端口
+#    option bind_addr '0.0.0.0'   # 绑定地址
+#    option data_dir '/ext/dockermanager'           # 数据库等数据目录
+#    option projects_dir '/ext/dockermanager/projects'  # Compose 项目目录
+#    option admin_password ''     # 初始管理员密码(留空则无法登录,需设置)
+#
+# 注:不用 rc.common 的 config_get(该版本 CONFIG 变量异常),直接 uci 命令读取
+
+USE_PROCD=1
+START=96
+STOP=04
+
+PROG=/usr/bin/dockermanager
+
+uci_get() {
+	local val
+	val=$(uci -q get "dockermanager.@main[0].$1")
+	[ -n "$val" ] && echo "$val" || echo "$2"
+}
+
+start_service() {
+	local enabled port bind_addr data_dir projects_dir admin_password
+
+	enabled=$(uci_get enabled 1)
+	port=$(uci_get port 8080)
+	bind_addr=$(uci_get bind_addr 0.0.0.0)
+	data_dir=$(uci_get data_dir /ext/dockermanager)
+	projects_dir=$(uci_get projects_dir "${data_dir}/projects")
+	admin_password=$(uci_get admin_password "")
+
+	[ "$enabled" = "1" ] || return 1
+	[ -x "$PROG" ] || { logger -t dockermanager "binary not found: $PROG"; return 1; }
+
+	mkdir -p "$data_dir" "$projects_dir" || return 1
+
+	procd_open_instance
+	procd_set_param command "$PROG"
+	procd_set_param respawn 3600 5 5
+	# 配置文件变更时自动重载
+	procd_set_param file /etc/config/dockermanager
+	# 环境变量(注意:procd_set_param env 多次调用会覆盖,必须一次传全部)
+	if [ -n "$admin_password" ]; then
+		procd_set_param env "DM_ADMIN_PASSWORD=$admin_password" "SERVER_PORT=$port" "DATABASE_PATH=${data_dir}/docker-manager.db" "DM_PROJECTS_DIR=$projects_dir"
+	else
+		procd_set_param env "SERVER_PORT=$port" "DATABASE_PATH=${data_dir}/docker-manager.db" "DM_PROJECTS_DIR=$projects_dir"
+	fi
+	procd_close_instance
+}
+
+service_triggers() {
+	procd_add_reload_trigger dockermanager
+}

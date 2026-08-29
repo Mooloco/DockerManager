@@ -74,7 +74,22 @@
 
 ---
 
-## V1.3.0 — 项目增强与网络管理(新功能)
+## V1.4.0 — OpenWrt x86_64 支持(procd + LuCI 入口)
+
+- **二进制复用**:Linux amd64 静态编译二进制直接在 OpenWrt(iStoreOS)运行,零改动
+- **procd init 脚本**:/etc/init.d/dockermanager,UCI 配置(enabled/port/bind_addr/data_dir/projects_dir/admin_password)
+- **ipk 打包**:现代 OpenWrt 格式(整包 gzip tar,内含 debian-binary + control.tar.gz + data.tar.gz),替换路由上 iStoreOS 自带 dockermanager
+- **LuCI 应用 luci-app-dockermanager**:菜单入口 + 跳转管理界面(纯静态,无 RPC)
+- 验证:路由 192.168.1.1(iStoreOS 24.10.4 / Docker 27.3.1)自动发现 12 个 compose 项目
+
+**踩坑记录**(详见 AI_Agent-README.md):
+- 现代 OpenWrt ipk = gzip 压缩 tar(非三段拼接)
+- procd_set_param env 多次调用互相覆盖,须一次传全部
+- rc.common config_get 在该版本异常(CONFIG 变量为空),init 脚本直接 uci 命令读取
+- rpcd ucode 返回格式必须 `{ '对象名': { 方法: {call} } }`;ucode 用 import 语法
+- LuCI 菜单 depends.acl 需对应 ACL 文件存在,否则页面 4xx
+
+## V1.3.0 — 项目增强 + 网络管理
 
 - **重建按钮**(列表页 + 详情页):`compose down` → 1 秒延迟 → `compose up -d`,弹窗展示完整日志
 - 项目操作按钮移至工具栏第二行

@@ -60,6 +60,15 @@ Docker Manager 是一个**自研自托管的 Web 版 Docker 管理工具**,核�
 9. **同步目录**:**直接同步到 `/mnt/scsi1/docker-manager`**(真实路径),不要动 `/opt/docker-manager` 软链接
 10. **Playwright 路径文本**:`text=/mnt/bind` 会被当正则,用 `td:has-text(...)` 或普通字符串
 
+### OpenWrt / procd 专坑(V1.4.0)
+
+11. **现代 OpenWrt ipk 格式**:整包是 **gzip 压缩的 tar**(内含 debian-binary + control.tar.gz + data.tar.gz 三个成员),不是"三段直接 cat 拼接";成员路径需带 `./`
+12. **Windows 侧打包权限**:Windows chmod 无效,必须在 Linux(测试机)上设置 755 再打包;嵌套 heredoc 会在 bash 解析时错乱,组装逻辑抽成独立脚本 scp 执行
+13. **procd_set_param env 多次调用互相覆盖**:所有环境变量必须一次调用传全部(`procd_set_param env "A=1" "B=2" ...`)
+14. **rc.common config_get 异常**:该版本(iStoreOS 24.10)`config_load` 后 CONFIG 变量为空导致 config_get 全取默认值;init 脚本直接用 `uci -q get dockermanager.@main[0].xxx` 读取
+15. **rpcd ucode 返回格式**:必须 `return { '<对象名>': { '<方法>': { call: fn } } }`;直接返回方法字典会注册失败且**静默跳过**(用 `rpcd -d -f` 前台调试才能看到 Invalid method definition);ucode 模块导入用 `import { x } from 'y'` 语法(不是 require)
+16. **LuCI 菜单 depends.acl**:menu.d JSON 里 `depends.acl` 引用的 ACL 文件必须存在,否则页面 4xx;纯静态入口方案可去掉 depends
+
 ## 五、代码约定
 
 - 后端 API 统一响应:`{success, data, error:{code, message}}`;Docker 错误统一转友好中文提示
@@ -68,7 +77,21 @@ Docker Manager 是一个**自研自托管的 Web 版 Docker 管理工具**,核�
 - 单测:auth/config/database/docker/compose 包均有 Go 测试(改这些包要跑 `go test ./...`)
 - 版本号同步:`dev.md` 更新 + 镜像 tag + deb 版本号保持一致
 
-## 六、发布流程
+## 七、项目改名注意事项(计划中,待执行)
+
+> 用户计划给本项目改名(当前名 `docker-manager`/`dockermanager` 与 **iStoreOS 应用商店自带应用同名**——路由 192.168.1.1 上已有 `dockermanager 0.1.1`(端口 8192,Linkease 生态),命名冲突是改名的主要动因)。改名时需同步修改:
+
+1. **Go module**:`backend/go.mod` 的 module 名(`github.com/Mooloco/docker-manager/backend`)+ 全部 `import` 路径
+2. **二进制名**:`cmd/server` 输出名、Dockerfile 的 COPY/ENTRYPOINT、deb 的 `/usr/bin/`、ipk 的 `/usr/bin/`
+3. **包名**:deb(`docker-manager`)、OpenWrt ipk(`dockermanager`)、LuCI(`luci-app-dockermanager`)
+4. **Docker Hub**:镜像名 `mooloco/dockermanager` → 新名(重新推送,旧 tag 可保留)
+5. **GitHub**:repo `Mooloco/DockerManager` → 新名(`gh repo rename`)
+6. **服务名**:systemd `docker-manager.service`、OpenWrt `/etc/init.d/dockermanager`、UCI 配置 `/etc/config/dockermanager`
+7. **环境变量前缀**:`DM_*`(config.go 读取逻辑、deb/ipk 的 env 配置、README/文档)
+8. **前端文案**:登录页/页面标题/logo、README.md、dev.md、本文件
+9. **安装冲突**:替换路由上 iStoreOS 自带 dockermanager 时需先 `opkg remove dockermanager`(会移除其 UCI 配置与 8192 服务),再装我们的
+
+## 八、发布流程
 
 1. 更新 `dev.md`(新版本记录)
 2. 前端 build → 交叉编译 Linux amd64 → 单文件验证
